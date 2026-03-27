@@ -1,23 +1,62 @@
 import type { H2HData, Match, Team, WinProbability } from '@/types/football';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-
+import { getEndedEventsByTeam } from '@/lib/api/eventsService';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 /**
  * Fetch H2H match data from backend.
  * Falls back to mock data if the backend is unavailable.
  */
+import { mapApiEvent } from '@/types/football';
+
 export async function getH2HMatches(
-  team1Id: string,
-  team2Id: string
+  team1: Team,
+  team2: Team
 ): Promise<H2HData> {
+  const team1Id = team1.id;
+  const team2Id = team2.id;
+  
   try {
     const res = await fetch(
-      `${API_URL}/matches/h2h?team1=${team1Id}&team2=${team2Id}`
+      `${API_URL}/matches?team_id_1=${team1Id}&team_id_2=${team2Id}`
     );
-    if (!res.ok) throw new Error('API not available');
-    return await res.json();
-  } catch {
-    // Return mock data during development
+    
+    if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+    }
+    
+    const responseData = await res.json();
+    
+    // Tratando possibilidade de retorno ser array direto ou envelopado
+    let apiEvents: any[] = [];
+    if (Array.isArray(responseData)) {
+      apiEvents = responseData;
+    } else if (responseData && Array.isArray(responseData.data)) {
+      apiEvents = responseData.data;
+    } else if (responseData && Array.isArray(responseData.matches)) {
+      apiEvents = responseData.matches;
+    } else if (responseData && Array.isArray(responseData.response)) {
+      apiEvents = responseData.response;
+    }
+
+    // Limita e mapeia para o formato correto de interface do front
+    const h2hMatches = apiEvents.slice(0, 10).map(mapApiEvent);
+
+    const fallbackProbability: WinProbability = {
+      homeTeam: team1,
+      awayTeam: team2,
+      homePercent: 50,
+      drawPercent: 0,
+      awayPercent: 50,
+      insight: 'Probabilidades estimadas por IA indisponíveis.',
+    };
+
+    return {
+      homeTeam: team1,
+      awayTeam: team2,
+      matches: h2hMatches.length ? h2hMatches : MOCK_H2H_DATA.matches,
+      probability: fallbackProbability,
+    };
+  } catch (err) {
+    console.error('[getH2HMatches] Fetch failed, returning mock data:', err);
     return MOCK_H2H_DATA;
   }
 }
@@ -25,7 +64,7 @@ export async function getH2HMatches(
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
 const REAL_MADRID: Team = {
-  id: 'real-madrid',
+  id: '179360',
   name: 'Real Madrid',
   shortName: 'RMA',
   logoUrl:
@@ -33,7 +72,7 @@ const REAL_MADRID: Team = {
 };
 
 const BARCELONA: Team = {
-  id: 'barcelona',
+  id: '294357',
   name: 'Barcelona',
   shortName: 'BAR',
   logoUrl:

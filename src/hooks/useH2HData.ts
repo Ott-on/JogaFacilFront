@@ -26,7 +26,7 @@ export function useH2HData(): UseH2HDataReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await getH2HMatches(homeTeam.id, awayTeam.id);
+      const result = await getH2HMatches(homeTeam, awayTeam);
       setData(result);
     } catch (err) {
       setError('Erro ao carregar dados H2H.');
@@ -34,7 +34,7 @@ export function useH2HData(): UseH2HDataReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [homeTeam.id, awayTeam.id]);
+  }, [homeTeam, awayTeam]);
 
   useEffect(() => {
     fetch();

@@ -9,6 +9,8 @@ import Badge from '@/components/ui/Badge';
 import { MatchRowSkeleton, TeamCardSkeleton, StatCardSkeleton } from '@/components/ui/SkeletonBlock';
 import { useH2HData } from '@/hooks/useH2HData';
 import type { MatchStatus } from '@/types/football';
+import { useState } from 'react';
+import TeamSelectorModal from '@/components/ui/TeamSelectorModal';
 
 const statusLabel: Record<MatchStatus, string> = {
   LIVE:       'AO VIVO',
@@ -17,7 +19,9 @@ const statusLabel: Record<MatchStatus, string> = {
 };
 
 export default function DashboardPage() {
-  const { data, isLoading, homeTeam, awayTeam } = useH2HData();
+  const { data, isLoading, homeTeam, awayTeam, setHomeTeam, setAwayTeam } = useH2HData();
+  const [isHomeTeamModalOpen, setIsHomeTeamModalOpen] = useState(false);
+  const [isAwayTeamModalOpen, setIsAwayTeamModalOpen] = useState(false);
 
   return (
     <>
@@ -36,7 +40,10 @@ export default function DashboardPage() {
             {isLoading ? (
               <TeamCardSkeleton />
             ) : (
-              <button className="flex-1 bg-[var(--color-surface-container-high)] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_8px_32px_rgba(218,226,253,0.05)]">
+              <button 
+                onClick={() => setIsHomeTeamModalOpen(true)}
+                className="flex-1 bg-[var(--color-surface-container-high)] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_8px_32px_rgba(218,226,253,0.05)]"
+              >
                 <div className="w-14 h-14 rounded-full bg-[var(--color-surface-container-highest)] flex items-center justify-center overflow-hidden">
                   {homeTeam.logoUrl ? (
                     <img
@@ -66,7 +73,10 @@ export default function DashboardPage() {
             {isLoading ? (
               <TeamCardSkeleton />
             ) : (
-              <button className="flex-1 bg-[var(--color-surface-container-high)] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_8px_32px_rgba(218,226,253,0.05)]">
+              <button 
+                onClick={() => setIsAwayTeamModalOpen(true)}
+                className="flex-1 bg-[var(--color-surface-container-high)] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_8px_32px_rgba(218,226,253,0.05)]"
+              >
                 <div className="w-14 h-14 rounded-full bg-[var(--color-surface-container-highest)] flex items-center justify-center overflow-hidden">
                   {awayTeam.logoUrl ? (
                     <img
@@ -261,6 +271,30 @@ export default function DashboardPage() {
       </main>
 
       <BottomNav />
+
+      {isHomeTeamModalOpen && (
+        <TeamSelectorModal
+          isOpen={isHomeTeamModalOpen}
+          onClose={() => setIsHomeTeamModalOpen(false)}
+          onSelect={(team) => {
+            setHomeTeam(team);
+            setIsHomeTeamModalOpen(false);
+          }}
+          title="Selecione o Time da Casa"
+        />
+      )}
+
+      {isAwayTeamModalOpen && (
+        <TeamSelectorModal
+          isOpen={isAwayTeamModalOpen}
+          onClose={() => setIsAwayTeamModalOpen(false)}
+          onSelect={(team) => {
+            setAwayTeam(team);
+            setIsAwayTeamModalOpen(false);
+          }}
+          title="Selecione o Time Visitante"
+        />
+      )}
     </>
   );
 }
